@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { api } from "../api.js";
 
-const API_BASE = "http://localhost:8000";
 const WIDTH = 800;
 const HEIGHT = 560;
 
@@ -94,8 +93,8 @@ export default function GraphView() {
   const [hoveredNode, setHoveredNode] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/graph/`)
-      .then((res) => res.json())
+    api
+      .getGraph()
       .then(setGraph)
       .catch(() => setError("Could not reach backend — is uvicorn running on :8000?"));
   }, []);
@@ -104,9 +103,6 @@ export default function GraphView() {
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
-      <p>
-        <RouterLink to="/">&larr; Back</RouterLink>
-      </p>
       <h1>Paper Graph</h1>
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
