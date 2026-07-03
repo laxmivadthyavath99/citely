@@ -10,8 +10,14 @@ Then visit http://localhost:8000/health
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+import models  # noqa: F401  (registers models with Base.metadata)
 
-app = FastAPI(title="Citely API", version="0.1.0")
+app = FastAPI(title="Citely API", version="0.2.0")
+
+# Auto-create tables on startup — fine for SQLite/dev.
+# In Phase 7 (deploy) we'll switch to Alembic migrations for Postgres.
+Base.metadata.create_all(bind=engine)
 
 # Allow the Vite dev server (and later, the deployed frontend) to call this API.
 app.add_middleware(
@@ -34,3 +40,9 @@ def health_check():
 @app.get("/")
 def root():
     return {"message": "Citely API is running. See /docs for the interactive API explorer."}
+
+
+@app.get("/debug/tables")
+def list_tables():
+    """Quick sanity check that the data model (Phase 2) is wired up correctly."""
+    return {"tables": list(Base.metadata.tables.keys())}
