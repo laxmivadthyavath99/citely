@@ -1,0 +1,36 @@
+"""
+Citely backend entrypoint.
+
+Run locally:
+    cd backend
+    pip install -r requirements.txt
+    uvicorn main:app --reload --port 8000
+
+Then visit http://localhost:8000/health
+"""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="Citely API", version="0.1.0")
+
+# Allow the Vite dev server (and later, the deployed frontend) to call this API.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",   # Vite dev server
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "citely-api"}
+
+
+@app.get("/")
+def root():
+    return {"message": "Citely API is running. See /docs for the interactive API explorer."}
