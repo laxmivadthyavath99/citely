@@ -76,3 +76,11 @@ class PaperDetailOut(PaperOut):
     notes: list[NoteOut] = []
     links_from: list[LinkOut] = []
     links_to: list[LinkOut] = []
+
+
+# --- Search ---
+class SearchResult(BaseModel):
+    paper_id: int
+    title: str
+    matched_field: str      # "title" | "authors" | "abstract" | "note"
+    snippet: str             # the matching text, trimmed for context

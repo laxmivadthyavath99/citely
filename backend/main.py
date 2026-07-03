@@ -12,9 +12,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import models  # noqa: F401  (registers models with Base.metadata)
-from routers import papers, notes, links
+from routers import papers, notes, links, search
 
-app = FastAPI(title="Citely API", version="0.4.0")
+app = FastAPI(title="Citely API", version="0.5.0")
 
 # Auto-create tables on startup — fine for SQLite/dev.
 # In Phase 7 (deploy) we'll switch to Alembic migrations for Postgres.
@@ -23,6 +23,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(papers.router)
 app.include_router(notes.router)
 app.include_router(links.router)
+app.include_router(search.router)
 
 # Allow the Vite dev server (and later, the deployed frontend) to call this API.
 app.add_middleware(

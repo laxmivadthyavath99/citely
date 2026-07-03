@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 import models, schemas
 
@@ -73,6 +74,69 @@ def delete_note(db: Session, note_id: int):
     db.delete(db_note)
     db.commit()
     return True
+
+
+# --- Search ---
+def _snippet(text: str, query: str, radius: int = 60) -> str:
+    """Returns a short excerpt of `text` centered on the first match of `query`."""
+    lower_text = text.lower()
+    idx = lower_text.find(query.lower())
+    if idx == -1:
+        return text[: radius * 2].strip()
+    start = max(0, idx - radius)
+    end = min(len(text), idx + len(query) + radius)
+    prefix = "…" if start > 0 else ""
+    suffix = "…" if end < len(text) else ""
+    return f"{prefix}{text[start:end].strip()}{suffix}"
+
+
+def search(db: Session, query: str, limit: int = 50):
+    """
+    Simple, portable substring search (case-insensitive) across paper
+    title/authors/abstract and note content. Works identically on SQLite
+    and Postgres — no engine-specific full-text index required.
+    """
+    like_query = f"%{query.lower()}%"
+    results = []
+
+    matched_papers = (
+        db.query(models.Paper)
+        .filter(
+            func.lower(models.Paper.title).like(like_query)
+            | func.lower(models.Paper.authors).like(like_query)
+            | func.lower(models.Paper.abstract).like(like_query)
+        )
+        .limit(limit)
+        .all()
+    )
+    for paper in matched_papers:
+        if query.lower() in paper.title.lower():
+            field, text = "title", paper.title
+        elif query.lower() in (paper.authors or "").lower():
+            field, text = "authors", paper.authors
+        else:
+            field, text = "abstract", paper.abstract
+        results.append(
+            {"paper_id": paper.id, "title": paper.title, "matched_field": field, "snippet": _snippet(text, query)}
+        )
+
+    matched_notes = (
+        db.query(models.Note)
+        .filter(func.lower(models.Note.content).like(like_query))
+        .limit(limit)
+        .all()
+    )
+    for note in matched_notes:
+        results.append(
+            {
+                "paper_id": note.paper_id,
+                "title": note.paper.title,
+                "matched_field": "note",
+                "snippet": _snippet(note.content, query),
+            }
+        )
+
+    return results[:limit]
 
 
 # --- Links ---
