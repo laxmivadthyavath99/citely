@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import httpx
 import crud, schemas
 from database import get_db
+from metadata_fetch import fetch_metadata
 
 router = APIRouter(prefix="/papers", tags=["papers"])
 
@@ -9,6 +11,23 @@ router = APIRouter(prefix="/papers", tags=["papers"])
 @router.post("/", response_model=schemas.PaperOut)
 def add_paper(paper: schemas.PaperCreate, db: Session = Depends(get_db)):
     return crud.create_paper(db, paper)
+
+
+@router.post("/import", response_model=schemas.PaperOut)
+async def import_paper(payload: schemas.PaperImportRequest, db: Session = Depends(get_db)):
+    """
+    Paste an arXiv ID/URL, DOI/URL, or a title to search — fetches metadata
+    from Semantic Scholar (free API) and saves it as a new paper.
+    """
+    try:
+        metadata = await fetch_metadata(payload.identifier)
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Metadata lookup failed: {exc}")
+
+    if not metadata:
+        raise HTTPException(status_code=404, detail="No paper found for that identifier")
+
+    return crud.create_paper(db, schemas.PaperCreate(**metadata))
 
 
 @router.get("/", response_model=list[schemas.PaperOut])

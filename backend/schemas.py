@@ -14,6 +14,10 @@ class PaperCreate(BaseModel):
     year: Optional[int] = None
 
 
+class PaperImportRequest(BaseModel):
+    identifier: str   # arXiv ID/URL, DOI/URL, or free-text title to search
+
+
 class PaperOut(PaperCreate):
     id: int
     added_at: datetime.datetime

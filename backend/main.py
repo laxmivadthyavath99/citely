@@ -14,7 +14,7 @@ from database import engine, Base
 import models  # noqa: F401  (registers models with Base.metadata)
 from routers import papers, notes, links
 
-app = FastAPI(title="Citely API", version="0.3.0")
+app = FastAPI(title="Citely API", version="0.4.0")
 
 # Auto-create tables on startup — fine for SQLite/dev.
 # In Phase 7 (deploy) we'll switch to Alembic migrations for Postgres.
