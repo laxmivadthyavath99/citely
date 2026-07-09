@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { api } from "../api.js";
 
-const API_BASE = "http://localhost:8000";
 const WIDTH = 800;
 const HEIGHT = 560;
 
 const RELATION_COLORS = {
-  builds_on: "#2563eb",
-  contradicts: "#dc2626",
-  same_method: "#16a34a",
-  related: "#94a3b8",
+  builds_on: "#3D5A4C",
+  contradicts: "#A23B3B",
+  same_method: "#9C7A3C",
+  related: "#A6A198",
 };
 
 function useForceLayout(nodes, edges) {
@@ -94,8 +93,8 @@ export default function GraphView() {
   const [hoveredNode, setHoveredNode] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/graph/`)
-      .then((res) => res.json())
+    api
+      .getGraph()
       .then(setGraph)
       .catch(() => setError("Could not reach backend — is uvicorn running on :8000?"));
   }, []);
@@ -103,29 +102,29 @@ export default function GraphView() {
   const positions = useForceLayout(graph.nodes, graph.edges);
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem" }}>
-      <p>
-        <RouterLink to="/">&larr; Back</RouterLink>
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "2.5rem 2rem" }}>
+      <h1>Paper graph</h1>
+      <p style={{ color: "var(--ink-soft)", marginTop: "-0.25rem" }}>
+        How your papers connect — hover a card to see its title.
       </p>
-      <h1>Paper Graph</h1>
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p style={{ color: "var(--brick)" }}>{error}</p>}
 
       {graph.nodes.length === 0 && !error && (
-        <p style={{ color: "#666" }}>
-          No papers yet, or no positions computed. Add papers and links via the API, then refresh.
+        <p style={{ color: "var(--ink-soft)" }}>
+          No papers yet. Add some from the library, then link them to see the graph.
         </p>
       )}
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "0.5rem", fontSize: "0.85rem" }}>
+      <div style={{ display: "flex", gap: "1.25rem", margin: "1rem 0", fontSize: "0.8rem" }}>
         {Object.entries(RELATION_COLORS).map(([type, color]) => (
-          <span key={type} style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-            <span style={{ width: 12, height: 12, background: color, display: "inline-block", borderRadius: "50%" }} />
-            {type}
+          <span key={type} style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "var(--ink-soft)" }}>
+            <span style={{ width: 10, height: 10, background: color, display: "inline-block", borderRadius: "50%" }} />
+            {type.replace("_", " ")}
           </span>
         ))}
       </div>
 
-      <svg width={WIDTH} height={HEIGHT} style={{ border: "1px solid #e5e7eb", borderRadius: 8, background: "#fff" }}>
+      <svg width={WIDTH} height={HEIGHT} style={{ border: "1px solid var(--border)", borderRadius: 8, background: "#fff" }}>
         {graph.edges.map((e) => {
           const a = positions[e.source], b = positions[e.target];
           if (!a || !b) return null;
@@ -146,8 +145,8 @@ export default function GraphView() {
           const isHovered = hoveredNode === n.id;
           return (
             <g key={n.id} onMouseEnter={() => setHoveredNode(n.id)} onMouseLeave={() => setHoveredNode(null)}>
-              <circle cx={p.x} cy={p.y} r={isHovered ? 14 : 10} fill="#2563eb" stroke="#1e3a8a" strokeWidth={1.5} />
-              <text x={p.x + 16} y={p.y + 4} fontSize={12} fill="#111">
+              <circle cx={p.x} cy={p.y} r={isHovered ? 14 : 10} fill="#3D5A4C" stroke="#9C7A3C" strokeWidth={1.5} />
+              <text x={p.x + 16} y={p.y + 4} fontSize={12} fill="var(--ink)">
                 {n.title.length > 40 ? n.title.slice(0, 40) + "…" : n.title}
               </text>
             </g>
@@ -155,7 +154,7 @@ export default function GraphView() {
         })}
       </svg>
 
-      <p style={{ color: "#666", fontSize: "0.85rem", marginTop: "0.5rem" }}>
+      <p className="meta" style={{ marginTop: "0.5rem" }}>
         {graph.nodes.length} papers · {graph.edges.length} links
       </p>
     </div>

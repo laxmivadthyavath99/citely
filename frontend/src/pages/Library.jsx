@@ -36,7 +36,7 @@ export default function Library() {
     } catch (err) {
       setError(
         err.message.includes("429")
-          ? "Semantic Scholar rate limit hit — wait a minute and try again."
+          ? "Semantic Scholar's free tier is rate-limited right now — wait a minute and try again."
           : err.message
       );
     } finally {
@@ -64,7 +64,7 @@ export default function Library() {
   }
 
   async function handleDelete(id) {
-    if (!confirm("Delete this paper and all its notes/links?")) return;
+    if (!confirm("Delete this paper and all its notes and links?")) return;
     try {
       await api.deletePaper(id);
       loadPapers();
@@ -74,95 +74,123 @@ export default function Library() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem", maxWidth: 760 }}>
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "2.5rem 2rem" }}>
       <h1>Library</h1>
+      <p style={{ color: "var(--ink-soft)", marginTop: "-0.25rem" }}>
+        Every paper you've read, what you learned from it, and how it connects to the rest.
+      </p>
 
-      <form onSubmit={handleImport} style={{ marginBottom: "0.75rem" }}>
-        <label style={{ display: "block", marginBottom: "0.3rem", fontSize: "0.9rem", color: "#444" }}>
-          Add a paper — paste an arXiv ID/URL, DOI, or a title to search
+      <form onSubmit={handleImport} style={{ marginTop: "1.5rem" }}>
+        <label style={{ display: "block", marginBottom: "0.4rem", fontSize: "0.88rem", color: "var(--ink-soft)" }}>
+          Paste an arXiv ID, arXiv URL, DOI, or a title to search
         </label>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.6rem" }}>
           <input
+            className="input"
             value={importValue}
             onChange={(e) => setImportValue(e.target.value)}
-            placeholder="e.g. 1706.03762, or a paper title"
-            style={{ flex: 1, padding: "0.5rem", border: "1px solid #ccc", borderRadius: 6 }}
+            placeholder="e.g. 1706.03762"
           />
-          <button type="submit" disabled={importing} style={buttonStyle}>
-            {importing ? "Fetching…" : "Import"}
+          <button type="submit" disabled={importing} className="btn btn-primary" style={{ whiteSpace: "nowrap" }}>
+            {importing ? "Fetching…" : "Add paper"}
           </button>
         </div>
       </form>
 
-      <button onClick={() => setShowManualForm((v) => !v)} style={linkButtonStyle}>
-        {showManualForm ? "Cancel manual entry" : "Or add manually instead"}
+      <button onClick={() => setShowManualForm((v) => !v)} className="btn-text" style={{ marginTop: "0.75rem" }}>
+        {showManualForm ? "Cancel manual entry" : "Enter details manually instead"}
       </button>
 
       {showManualForm && (
-        <form onSubmit={handleManualSubmit} style={{ marginTop: "0.75rem", padding: "1rem", border: "1px solid #e5e7eb", borderRadius: 8 }}>
+        <form
+          onSubmit={handleManualSubmit}
+          className="card"
+          style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}
+        >
           <input
             required
+            className="input"
             placeholder="Title"
             value={manual.title}
             onChange={(e) => setManual({ ...manual, title: e.target.value })}
-            style={inputStyle}
           />
           <input
+            className="input"
             placeholder="Authors"
             value={manual.authors}
             onChange={(e) => setManual({ ...manual, authors: e.target.value })}
-            style={inputStyle}
           />
           <textarea
+            className="input"
             placeholder="Abstract"
             value={manual.abstract}
             onChange={(e) => setManual({ ...manual, abstract: e.target.value })}
-            style={{ ...inputStyle, minHeight: 70 }}
+            style={{ minHeight: 80, resize: "vertical" }}
           />
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", gap: "0.6rem" }}>
             <input
+              className="input"
               placeholder="URL"
               value={manual.url}
               onChange={(e) => setManual({ ...manual, url: e.target.value })}
-              style={{ ...inputStyle, flex: 2 }}
+              style={{ flex: 2 }}
             />
             <input
+              className="input"
               placeholder="Year"
               value={manual.year}
               onChange={(e) => setManual({ ...manual, year: e.target.value })}
-              style={{ ...inputStyle, flex: 1 }}
+              style={{ flex: 1 }}
             />
           </div>
-          <button type="submit" style={buttonStyle}>Add paper</button>
+          <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
+            Add paper
+          </button>
         </form>
       )}
 
-      {error && <p style={{ color: "#dc2626", marginTop: "1rem" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "var(--brick)", marginTop: "1rem", fontSize: "0.9rem" }}>{error}</p>
+      )}
 
-      <h2 style={{ marginTop: "2rem" }}>Your papers {papers.length > 0 && `(${papers.length})`}</h2>
-      {loading && <p>Loading…</p>}
-      {!loading && papers.length === 0 && <p style={{ color: "#666" }}>No papers yet — add one above.</p>}
+      <h2>
+        Your papers{papers.length > 0 && <span className="meta"> — {papers.length}</span>}
+      </h2>
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      {loading && <p style={{ color: "var(--ink-soft)" }}>Loading…</p>}
+      {!loading && papers.length === 0 && (
+        <p style={{ color: "var(--ink-soft)" }}>Nothing here yet — add your first paper above.</p>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
         {papers.map((p) => (
-          <li key={p.id} style={{ padding: "0.75rem 0", borderBottom: "1px solid #f0f0f0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <Link to={`/paper/${p.id}`} style={{ fontWeight: 600, color: "#111", textDecoration: "none" }}>
-                {p.title}
-              </Link>
-              <div style={{ fontSize: "0.85rem", color: "#666" }}>
-                {p.authors} {p.year ? `· ${p.year}` : ""}
+          <div key={p.id} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+              <div style={{ minWidth: 0 }}>
+                <Link
+                  to={`/paper/${p.id}`}
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 600,
+                    fontSize: "1.05rem",
+                    color: "var(--ink)",
+                    textDecoration: "none",
+                    display: "block",
+                  }}
+                >
+                  {p.title}
+                </Link>
+                <div className="meta" style={{ marginTop: "0.3rem" }}>
+                  {p.authors || "Unknown authors"} {p.year ? `· ${p.year}` : ""}
+                </div>
               </div>
+              <button onClick={() => handleDelete(p.id)} className="btn-danger-text">
+                Delete
+              </button>
             </div>
-            <button onClick={() => handleDelete(p.id)} style={dangerLinkStyle}>Delete</button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
-
-const inputStyle = { display: "block", width: "100%", padding: "0.5rem", marginBottom: "0.5rem", border: "1px solid #ccc", borderRadius: 6, boxSizing: "border-box" };
-const buttonStyle = { padding: "0.5rem 1rem", background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" };
-const linkButtonStyle = { background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0, fontSize: "0.9rem" };
-const dangerLinkStyle = { background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: "0.85rem" };

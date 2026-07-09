@@ -29,37 +29,44 @@ export default function Search() {
   }
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", padding: "2rem", maxWidth: 760 }}>
+    <div style={{ maxWidth: 780, margin: "0 auto", padding: "2.5rem 2rem" }}>
       <h1>Search</h1>
-      <form onSubmit={handleSearch} style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+      <p style={{ color: "var(--ink-soft)", marginTop: "-0.25rem" }}>
+        Across titles, authors, abstracts, and everything you've written in your notes.
+      </p>
+
+      <form onSubmit={handleSearch} style={{ display: "flex", gap: "0.6rem", marginTop: "1.25rem", marginBottom: "1.5rem" }}>
         <input
+          className="input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search titles, authors, abstracts, and your notes"
-          style={{ flex: 1, padding: "0.5rem", border: "1px solid #ccc", borderRadius: 6 }}
+          placeholder="Search your library…"
         />
-        <button type="submit" style={buttonStyle}>Search</button>
+        <button type="submit" className="btn btn-primary">Search</button>
       </form>
 
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p style={{ color: "var(--brick)" }}>{error}</p>}
+      {searched && results.length === 0 && !error && (
+        <p style={{ color: "var(--ink-soft)" }}>No matches found.</p>
+      )}
 
-      {searched && results.length === 0 && !error && <p style={{ color: "#666" }}>No matches found.</p>}
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
         {results.map((r, i) => (
-          <li key={i} style={{ padding: "0.75rem 0", borderBottom: "1px solid #f0f0f0" }}>
-            <Link to={`/paper/${r.paper_id}`} style={{ fontWeight: 600, color: "#111", textDecoration: "none" }}>
-              {r.title}
-            </Link>
-            <div style={{ fontSize: "0.85rem", color: "#666" }}>
-              matched in <strong>{FIELD_LABELS[r.matched_field] || r.matched_field}</strong>
+          <Link key={i} to={`/paper/${r.paper_id}`} style={{ textDecoration: "none" }}>
+            <div className="card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "var(--ink)" }}>
+                  {r.title}
+                </span>
+                <span className="tag">{FIELD_LABELS[r.matched_field] || r.matched_field}</span>
+              </div>
+              <div style={{ marginTop: "0.4rem", color: "var(--ink-soft)", fontSize: "0.92rem" }}>
+                {r.snippet}
+              </div>
             </div>
-            <div style={{ fontSize: "0.9rem", marginTop: "0.25rem" }}>{r.snippet}</div>
-          </li>
+          </Link>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
-
-const buttonStyle = { padding: "0.5rem 1rem", background: "#2563eb", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" };
