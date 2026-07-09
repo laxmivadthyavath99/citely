@@ -13,30 +13,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import models  # noqa: F401  (registers models with Base.metadata)
 from routers import papers, notes, links, search, graph
+import os
 
-app = FastAPI(title="Citely API", version="0.6.0")
+app = FastAPI(title="Citely API", version="0.8.0")
 
 # Auto-create tables on startup — fine for SQLite/dev.
-# In Phase 7 (deploy) we'll switch to Alembic migrations for Postgres.
+# In production this also runs once against Postgres, which is fine for
+# a project this size; a larger app would switch to Alembic migrations.
 Base.metadata.create_all(bind=engine)
+
+# Local dev origins are always allowed. Add your deployed frontend URL
+# via the FRONTEND_URL env var (set it in Render's dashboard).
+allowed_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    allowed_origins.append(frontend_url)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(papers.router)
 app.include_router(notes.router)
 app.include_router(links.router)
 app.include_router(search.router)
 app.include_router(graph.router)
-
-# Allow the Vite dev server (and later, the deployed frontend) to call this API.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",   # Vite dev server
-        "http://127.0.0.1:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.get("/health")
@@ -51,5 +56,5 @@ def root():
 
 @app.get("/debug/tables")
 def list_tables():
-    """Quick sanity check that the data model (Phase 2) is wired up correctly."""
+    """Quick sanity check that the data model is wired up correctly."""
     return {"tables": list(Base.metadata.tables.keys())}
